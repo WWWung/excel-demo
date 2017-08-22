@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script type="text/javascript" src="http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js"></script>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.js"></script>
+	</head>
+	<body>
+		<input type="file" id="choose"/>
+		<p id='show'></p>
+		<script>
+			/*
+			 * 依赖于插件js-xlsx
+			 * 插件相关文档地址 https://github.com/SheetJS/js-xlsx/
+			 * 网上demo https://www.by2009.com/a/126.html
+			 */
+			
+			$('#choose').change(function(e){
+				var files = e.target.files;
+				var fileReader = new FileReader();//读取文件
+				fileReader.onload = function(ev) {
+					console.log('a')
+	                try {
+	                    var data = ev.target.result,
+	                        workbook = XLSX.read(data, {
+	                            type: 'binary'
+	                        });// 以二进制流方式读取得到整份excel表格对象
+	                } catch (e) {
+	                    console.log('文件类型不正确');
+	                    return;
+	                }
+	 				
+	 				console.log(workbook)
+	 				
+	 				//workbook即为转换后的数据对象 , 下面的代码只是测试
+	 
+	 
+	                // 表格的表格范围，可用于判断表头是否数量是否正确
+	                var fromTo = '';
+	     
+	                var name = workbook.SheetNames[0];
+	                fromTo = workbook.Sheets[name]['!ref'];
+	                fromTo = fromTo.split(":");
+					var startNum = fromTo[0].charCodeAt(0); //由于列数是用大写字母表示，所以这里转换成code码来获取列数
+					var endNum = fromTo[1].charCodeAt(0);
+	//				var num = endNum - startNum + 1;//一共有5列 
+					var rowArr = [];//存储每列的数据
+					
+					for(var i=startNum;i<=endNum;i++){
+						rowArr[i-startNum] = [];
+						for(var k in workbook.Sheets[name]){
+							if(k.charCodeAt(0) == i){
+								rowArr[i-startNum].push(workbook.Sheets[name][k].v);
+							}
+						}
+					}
+					var len = rowArr[0].length;
+					
+					console.log(rowArr)
+	 			
+	            };
+	            fileReader.readAsBinaryString(files[0]);
+			})
+		</script>
+	</body>
+</html>

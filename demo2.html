@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js"></script>
+	</head>
+	<body>
+		<input type="button" value="导出" id='btn'/>
+		<script>
+		    /*
+			 * 依赖于插件js-xlsx
+			 * 插件相关文档地址 https://github.com/SheetJS/js-xlsx/
+			 * 网上demo http://www.jianshu.com/p/74d405940305
+			 */
+			let data = { //模拟数据
+				A : ['a','b','c','d','e','f','g','h','a'],
+				B : [1,2,3,4,5,6,],
+				C : [1,2,3,4,5,6,7],
+			};
+			
+			let wopts = { bookType: 'xlsx', bookSST: false, type: 'binary' }; //固定格式，用来定义导出的格式类型
+			
+			btn.onclick = function(){
+				downloadFile(data,'Sheet1', '测试文件');
+			}
+			
+			//格式转换，将data的格式类型转换为js-xlsx需要的格式类型（注：js-xlsx提供了自带的方法 XLSX.utils.json_to_sheet用于转换，但是不太清楚使用方法，所以自己模拟了一个）
+			function toSheet(data){
+				let rsl = {};
+				let arr = [];
+				let ref = [];
+				for(var k in data){
+					ref.push(k + '' + data[k].length);
+					let obj = toSheetSub(data[k],k);
+					arr.push(obj);
+				}
+				rsl = Object.assign(...arr);//合并对象
+				rsl['!ref'] = ref[0][0] + '1:' + ref[ref.length - 1];//添加列数
+				return rsl;
+			}
+			//格式转换
+			function toSheetSub(arr,title){
+				let obj = {};
+				for(var i=0;i<arr.length;i++){
+					let str = title + (i+1);
+					obj[str] = {
+						v : arr[i],
+						t : 's'
+					};
+				}
+				return obj;
+			}
+			//参数data：数据，sheetname：工作表名称(待确定)，filename：文件名称，type：
+			function downloadFile(data, sheetName, fileName){
+            	let wb = { SheetNames: [sheetName], Sheets: {}, Props: {} };//js-xlsx的固定格式
+            	
+				wb.Sheets[sheetName] = toSheet(data);//转换数据
+				
+				let _file = new Blob([stringToCode(XLSX.write(wb, wopts))], { type: "application/octet-stream" });//Blob构造函数，定义文件对象，相关文档 https://developer.mozilla.org/zh-CN/docs/Web/API/Blob
+				
+				fileName = fileName?fileName:'文件'
+				getFile(_file, fileName + '.' + (wopts.bookType=="biff2"?"xls":wopts.bookType));
+			}
+			
+			
+			function getFile(obj, fileName) { 
+	            var tmpa = document.createElement("a");
+	            tmpa.download = fileName || "下载";
+	            tmpa.href = URL.createObjectURL(obj); //绑定a标签
+	          	tmpa.click(); //模拟点击实现下载
+	            URL.revokeObjectURL(obj); //释放内存，最后延时释放，确定下载完毕后释放
+	        }
+			
+			function stringToCode(s) { //字符串转换成字符流
+	            if (typeof ArrayBuffer !== 'undefined') {
+	                var buf = new ArrayBuffer(s.length);
+	                var view = new Uint8Array(buf);
+	                for (var i = 0; i != s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+	                return buf;
+	            } else {
+	                var buf = new Array(s.length);
+	                for (var i = 0; i != s.length; ++i) buf[i] = s.charCodeAt(i) & 0xFF;
+	                return buf;
+	            }
+	        }
+		</script>
+	</body>
+</html>
